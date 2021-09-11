@@ -72,7 +72,10 @@ struct DCEL {
 
 
 struct bisector {
-    /* Fill in */
+    double grad;
+    double mp_x;
+    double mp_y;
+    int finiteGrad;
 };
 
 /* Gets a point at least distance away from the midpoint of the bisector given. */
@@ -91,25 +94,25 @@ void getBisectorPoint(double distance, struct bisector *b, double *x, double *y)
 struct bisector *getBisector(double x1, double y1, double x2, double y2);
 
 struct bisector *getBisector(double x1, double y1, double x2, double y2){
-    /* Fill in */
 
+    struct bisector *p = (struct bisector*)malloc(sizeof(struct bisector));
+    p->mp_x = (x1 + x2) / 2.0;
+    p->mp_y = (y1 + y2) / 2.0;
 
-    struct bisector *p = NULL;
-
-
-
-
-
-
-
-
-
-
+    // store whether the gradient is finite or infinite, store gradient if finite
+    if (y2 - y1 == 0) {
+        p->finiteGrad = 0;
+    }
+    else {
+        p->finiteGrad = 1;
+        p->grad = -((x2 - x1) / (y2 - y1));
+    }
 
     return p;
 }
 
 struct bisector *readNextBisector(FILE *bisectorfile){
+
     double x1, y1, x2, y2;
     
     if(fscanf(bisectorfile, "%lf %lf %lf %lf", &x1, &y1, &x2, &y2) != 4){
@@ -120,33 +123,34 @@ struct bisector *readNextBisector(FILE *bisectorfile){
 }
 
 char *getBisectorEquation(struct bisector *b){
+
+    size_t MAX_BUFFER_SIZE = 64;
+
     if(! b){
         return NULL;
     }
-    /*
 
-    FILL IN
+    char *returnString = (char*)malloc(MAX_BUFFER_SIZE);
+    if(! b->finiteGrad){
 
-    */
-    char *returnString = NULL;
-    if(0){
-        /* Find out memory needed. */
-        int stringLength = snprintf(returnString, 0, "x = %lf", 
-            0.0);
+        int stringLength = snprintf(returnString, MAX_BUFFER_SIZE, "x = %lf",
+            b->mp_x);
         returnString = (char *) malloc(sizeof(char) * (stringLength + 1));
         assert(returnString);
-        sprintf(returnString, "x = %lf", 0.0);
+        sprintf(returnString, "x = %lf", b->mp_x);
+
     } else {
-        /* Find out memory needed. */
-        int stringLength = snprintf(returnString, 0, 
-            "y = %lf * (x - %lf) + %lf", 0.0, 0.0, 
-            0.0);
+
+        int stringLength = snprintf(returnString, MAX_BUFFER_SIZE,
+            "y = %lf * (x - %lf) + %lf", b->grad, b->mp_x,
+            b->mp_y);
         returnString = (char *) malloc(sizeof(char) * (stringLength + 1));
         assert(returnString);
-        sprintf(returnString, 
-            "y = %lf * (x - %lf) + %lf", 0.0, 0.0, 
-            0.0);
+        sprintf(returnString,
+            "y = %lf * (x - %lf) + %lf", b->grad, b->mp_x,
+            b->mp_y);
     }
+
     return returnString;
 }
 

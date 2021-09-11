@@ -207,6 +207,8 @@ int main(int argc, char **argv){
                 // We add one watchTower at a time.
                 incrementalVoronoi(dcel, watchTowers[i]);
             }
+
+            printDcel(dcel);
             
             #ifdef USE_GUI
             /* Visualisation: Points */

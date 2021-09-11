@@ -1,6 +1,14 @@
 #include <stdio.h>
 #include "watchtowerStruct.h"
+
+#define STARTOFEDGE (-1)
+#define MIDEDGE 0
+#define ENDOFEDGE (1)
+
 struct face;
+struct edge;
+struct halfEdge;
+struct vertex;
 struct split;
 struct bisector;
 struct intersection;
@@ -92,5 +100,25 @@ int DCELhasEdge(struct DCEL *dcel, int edge);
 /* Check if the DCEL has a pair for the given edge. */
 int DCELhasEdgePair(struct DCEL *dcel, int edge);
 
+/* creates a split from intersection struct */
+struct split *getSplitFromIntersect(struct intersection *intersection);
+
 /* prints info of a bisector */
 void printBisector(struct bisector *b);
+
+/* prints DCEL data */
+void printDcel(struct DCEL *dcel);
+
+/* prints face data */
+void printFace(struct DCEL *dcel, int faceIndex);
+
+/* prints half edge data */
+void printHalfEdge(struct DCEL *dcel, struct halfEdge *halfEdge);
+
+/* prints edge data */
+void printEdge(struct DCEL *dcel, int edgeIndex);
+
+/* prints vertex data */
+void printVertex(struct DCEL *dcel, int vertexIndex);
+
+

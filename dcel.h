@@ -103,6 +103,14 @@ int DCELhasEdgePair(struct DCEL *dcel, int edge);
 /* creates a split from intersection struct */
 struct split *getSplitFromIntersect(struct intersection *intersection);
 
+/* reverses the start and end vertices and edges of a split */
+void reverseSplit(struct split* split);
+
+/* calculates a bisector between the watchtower at face and wt and executes
+ * a split between the intersection points
+ */
+void executeBisectorIntersectsSplit(struct DCEL *dcel, struct watchtowerStruct *wt, int face);
+
 /* prints info of a bisector */
 void printBisector(struct bisector *b);
 

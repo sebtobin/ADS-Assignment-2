@@ -56,8 +56,6 @@ void doCyleOnClick(int *data, double mouseX, double mouseY){
 
 #endif
 
-#define DEFAULT_FACE 0
-
 int main(int argc, char **argv){
     char *datafile;
     char *polygonfile;

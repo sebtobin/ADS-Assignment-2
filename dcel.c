@@ -85,11 +85,34 @@ void getBisectorPoint(double distance, struct bisector *b, double *x, double *y)
 
 void getBisectorPoint(double distance, struct bisector *b, double *x, double *y){
 
+    // for infinite gradient case, just subtract distance from mp_y to get point
     if (! b->finiteGrad) {
         *x = b->mp_x;
         *y = b->mp_y - distance;
     }
+    /* for finite gradient case, use equations and solve simultaneously:
+     *
+     *      alpha^2 + beta^2 = distance^2    (i.e. Pythagoras theorem, b was taken)
+     *      beta / alpha = grad
+     *
+     *      // solved for beta in terms of alpha
+     *      beta = grad * alpha
+     *
+     *      // solve for alpha (we know grad and distance)
+     *      alpha^2 + (grad * alpha)^2 = distance^2
+     *      alpha^2 + grad^2 * alpha^2 = distance^2
+     *      alpha^2 * (1 + grad^2) = distance^2
+     *      alpha^2 = distance^2 / (1 + grad^2)
+     *      alpha = sqrt( distance^2 / (1 + grad^2) )
+     *
+     *      // solve for beta
+     *      beta = grad * alpha
+     *
+     */
     else {
+
+        // sign variable ensures the sign of distance determines if
+        // alpha and beta are subtracted or added to get the new point
         int sign = 1;
         if (distance < 0) {
             sign = -1;
@@ -106,6 +129,8 @@ struct bisector *getBisector(double x1, double y1, double x2, double y2);
 struct bisector *getBisector(double x1, double y1, double x2, double y2){
 
     struct bisector *p = (struct bisector*)malloc(sizeof(struct bisector));
+
+    // store midpoint of the pair of points in bisector struct
     p->mp_x = (x1 + x2) / 2.0;
     p->mp_y = (y1 + y2) / 2.0;
 
@@ -310,6 +335,7 @@ enum intersectType intersects(struct halfEdge *he, struct bisector *b,
     double bEx;
     double bEy;
 
+    // get start and end points for line segment inside bisector line equation
     getBisectorPoint(minLength, b, &bSx, &bSy);
     getBisectorPoint(-1 * minLength, b, &bEx, &bEy);
 
@@ -1183,16 +1209,22 @@ struct intersection *getIntersection(struct bisector *b, struct DCEL *dcel, int 
 
             intersectsFound++;
 
+            // store int bool to determine if there were 2 intersections points
+            // otherwise there is a single point (END_OVERLAP case)
             if (intersectsFound == 2) {
                 intersection->multipleIntersects = 1;
             }
             else if (intersectsFound >= 2) {
-                printf("too many intersects for face ind %d\n", face);
+                fprintf(stderr, "too many intersects for face ind %d\n", face);
             }
 
+            // store intersection point info is either initial or final edge & vertex
             *tempEdge = curr->edge;
             tempVert->x = intersectPoint.x;
             tempVert->y = intersectPoint.y;
+
+            // set temp pointers to final edge & vertex, as there should be max
+            // 2 intersections this is sufficient to fill the intersection struct
             tempEdge = &intersection->edge_f;
             tempVert = &intersection->vertex_f;
         }
@@ -1238,6 +1270,8 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
 }
 
 void printBisector(struct bisector *b){
+
+    // print out bisector data for finite and infinite gradient cases
     if (! b->finiteGrad) {
         printf("bisector with infinite grad, midpoint at %lf, %lf\n", b->mp_x, b->mp_y);
     }

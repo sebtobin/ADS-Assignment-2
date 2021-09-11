@@ -91,3 +91,6 @@ int DCELhasEdge(struct DCEL *dcel, int edge);
 
 /* Check if the DCEL has a pair for the given edge. */
 int DCELhasEdgePair(struct DCEL *dcel, int edge);
+
+/* prints info of a bisector */
+void printBisector(struct bisector *b);

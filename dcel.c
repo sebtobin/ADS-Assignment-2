@@ -20,6 +20,8 @@
 #define OUTSIDE (-1)
 #define NODIAMETER (-1)
 
+#define MAX_BUFFER_SIZE 256
+
 struct halfEdge;
 struct vertex;
 
@@ -82,13 +84,21 @@ struct bisector {
 void getBisectorPoint(double distance, struct bisector *b, double *x, double *y);
 
 void getBisectorPoint(double distance, struct bisector *b, double *x, double *y){
-    /* Fill in */
- 
 
-
-
-
-
+    if (! b->finiteGrad) {
+        *x = b->mp_x;
+        *y = b->mp_y - distance;
+    }
+    else {
+        int sign = 1;
+        if (distance < 0) {
+            sign = -1;
+        }
+        int alpha = sign * ( sqrt(pow(distance, 2) / (1 + pow(b->grad, 2))) );
+        int beta = alpha * b->grad;
+        *x = b->mp_x - alpha;
+        *y = b->mp_y - beta;
+    }
 }
 
 struct bisector *getBisector(double x1, double y1, double x2, double y2);
@@ -123,8 +133,6 @@ struct bisector *readNextBisector(FILE *bisectorfile){
 }
 
 char *getBisectorEquation(struct bisector *b){
-
-    size_t MAX_BUFFER_SIZE = 64;
 
     if(! b){
         return NULL;
@@ -170,11 +178,11 @@ enum intersectType {
 };
 
 struct intersection {
-    /* Fill in */
-
-
-
-
+    int edge_i;
+    struct vertex vertex_i;
+    int edge_f;
+    struct vertex vertex_f;
+    int multipleIntersects;
 };
 
 /* 
@@ -289,6 +297,7 @@ enum intersectType intersects(struct halfEdge *he, struct bisector *b,
 
 enum intersectType intersects(struct halfEdge *he, struct bisector *b, 
     struct DCEL *dcel, double minLength, double *x, double *y){
+
     /* Half-edge x, y pair */
     double heSx = dcel->vertices[he->startVertex].x;
     double heSy = dcel->vertices[he->startVertex].y;
@@ -296,13 +305,14 @@ enum intersectType intersects(struct halfEdge *he, struct bisector *b,
     double heEy = dcel->vertices[he->endVertex].y;
     
     /* Bisector x, y pair */
-    double bSx = 0;
-    double bSy = 0;
-    double bEx = 0;
-    double bEy = 0;
-    
-    /* Fill in segment. */
-    
+    double bSx;
+    double bSy;
+    double bEx;
+    double bEy;
+
+    getBisectorPoint(minLength, b, &bSx, &bSy);
+    getBisectorPoint(-1 * minLength, b, &bEx, &bEy);
+
     /* Parametric equation parameters */
     double t1;
     double t2;
@@ -392,41 +402,33 @@ enum intersectType intersects(struct halfEdge *he, struct bisector *b,
 }
 
 char *getIntersectionString(struct intersection *intersection){
-    /*
-    
-    
-    
-    FILL IN
 
-
-
-    */
     if(! intersection){
       return NULL;
     }
-    char *returnString = NULL;
-    if(0 <= 0){
+    char *returnString = (char*)malloc(MAX_BUFFER_SIZE);
+    if(! intersection->multipleIntersects){
         /* Find out memory needed. */
-        int stringLength = snprintf(returnString, 0, 
+        int stringLength = snprintf(returnString, MAX_BUFFER_SIZE,
             "From Edge %d (%lf, %lf) to Edge %d (%lf, %lf)", 
-            0, 0.0, 0.0,
-            0, 0.0, 0.0);
+            intersection->edge_i, intersection->vertex_i.x, intersection->vertex_i.y,
+            intersection->edge_f, intersection->vertex_f.x, intersection->vertex_f.y);
         returnString = (char *) malloc(sizeof(char) * (stringLength + 1));
         assert(returnString);
-        sprintf(returnString, "From Edge %d (%lf, %lf) to Edge %d (%lf, %lf)", 
-            0, 0.0, 0.0,
-            0, 0.0, 0.0);
+        sprintf(returnString, "From Edge %d (%lf, %lf) to Edge %d (%lf, %lf)",
+            intersection->edge_i, intersection->vertex_i.x, intersection->vertex_i.y,
+            intersection->edge_f, intersection->vertex_f.x, intersection->vertex_f.y);
     } else {
         /* Find out memory needed. */
-        int stringLength = snprintf(returnString, 0, 
-            "From Edge %d (%lf, %lf) to Edge %d (%lf, %lf)", 
-            0, 0.0, 0.0,
-            0, 0.0, 0.0);
+        int stringLength = snprintf(returnString, MAX_BUFFER_SIZE,
+            "From Edge %d (%lf, %lf) to Edge %d (%lf, %lf)",
+            intersection->edge_i, intersection->vertex_i.x, intersection->vertex_i.y,
+            intersection->edge_f, intersection->vertex_f.x, intersection->vertex_f.y);
         returnString = (char *) malloc(sizeof(char) * (stringLength + 1));
         assert(returnString);
-        sprintf(returnString, "From Edge %d (%lf, %lf) to Edge %d (%lf, %lf)", 
-            0, 0.0, 0.0,
-            0, 0.0, 0.0);
+        sprintf(returnString, "From Edge %d (%lf, %lf) to Edge %d (%lf, %lf)",
+            intersection->edge_i, intersection->vertex_i.x, intersection->vertex_i.y,
+            intersection->edge_f, intersection->vertex_f.x, intersection->vertex_f.y);
     }
     return returnString;
 }
@@ -1167,18 +1169,39 @@ int DCELhasEdgePair(struct DCEL *dcel, int edge){
 
 struct intersection *getIntersection(struct bisector *b, struct DCEL *dcel, int face,
     double minLength){
-    /* 
 
+    struct halfEdge *curr = dcel->faces[face].he;
+    struct intersection *intersection = (struct intersection*)malloc(sizeof(struct intersection));
+    int *tempEdge = &intersection->edge_i, startVert = curr->startVertex, intersectsFound = 0;
+    struct vertex intersectPoint, *tempVert = &intersection->vertex_i;
 
-    FILL IN 
+    intersection->multipleIntersects = 0;
 
+    do {
 
+        if (intersects(curr, b, dcel, minLength, &intersectPoint.x, &intersectPoint.y) != DOESNT_INTERSECT) {
 
+            intersectsFound++;
 
+            if (intersectsFound == 2) {
+                intersection->multipleIntersects = 1;
+            }
+            else if (intersectsFound >= 2) {
+                printf("too many intersects for face ind %d\n", face);
+            }
 
+            *tempEdge = curr->edge;
+            tempVert->x = intersectPoint.x;
+            tempVert->y = intersectPoint.y;
+            tempEdge = &intersection->edge_f;
+            tempVert = &intersection->vertex_f;
+        }
 
-    */
-    return NULL;
+        curr = curr->next;
+
+    } while(curr->startVertex != startVert);
+
+    return intersection;
 }
 
 double getDiameter(struct DCEL *dcel, int faceIndex){
@@ -1213,3 +1236,13 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
     */
 
 }
+
+void printBisector(struct bisector *b){
+    if (! b->finiteGrad) {
+        printf("bisector with infinite grad, midpoint at %lf, %lf\n", b->mp_x, b->mp_y);
+    }
+    else {
+        printf("bisector with finite grad, grad of %lf, midpoint at %lf, %lf\n", b->grad, b->mp_x, b->mp_y);
+    }
+}
+

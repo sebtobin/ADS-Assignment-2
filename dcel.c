@@ -172,7 +172,7 @@ char *getBisectorEquation(struct bisector *b){
     if(! b->finiteGrad){
 
         int stringLength = snprintf(returnString, MAX_BUFFER_SIZE, "x = %lf",
-            b->mp_x);
+                                    b->mp_x);
         free(returnString);
         returnString = (char *) malloc(sizeof(char) * (stringLength + 1));
         assert(returnString);
@@ -181,14 +181,14 @@ char *getBisectorEquation(struct bisector *b){
     } else {
 
         int stringLength = snprintf(returnString, MAX_BUFFER_SIZE,
-            "y = %lf * (x - %lf) + %lf", b->grad, b->mp_x,
-            b->mp_y);
+                                    "y = %lf * (x - %lf) + %lf", b->grad, b->mp_x,
+                                    b->mp_y);
         free(returnString);
         returnString = (char *) malloc(sizeof(char) * (stringLength + 1));
         assert(returnString);
         sprintf(returnString,
-            "y = %lf * (x - %lf) + %lf", b->grad, b->mp_x,
-            b->mp_y);
+                "y = %lf * (x - %lf) + %lf", b->grad, b->mp_x,
+                b->mp_y);
     }
 
     return returnString;
@@ -255,7 +255,7 @@ int areaSign(double sx, double sy, double ex, double ey, double x, double y){
     /* |AB x AC|^2, squared area */
     /* See https://mathworld.wolfram.com/CrossProduct.html */
     areaSq = (ex - sx) * (y  - sy) -
-             (x  - sx) * (ey - sy);
+            (x  - sx) * (ey - sy);
     
     if(areaSq > 0.0){
         return 1;
@@ -288,10 +288,10 @@ int between(double sx, double sy, double ex, double ey, double x, double y){
 }
 
 enum intersectType parallelIntersects(double heSx, double heSy, double heEx, double heEy,
-    double bSx, double bSy, double bEx, double bEy, double *x, double *y);
+        double bSx, double bSy, double bEx, double bEy, double *x, double *y);
 
 enum intersectType parallelIntersects(double heSx, double heSy, double heEx, double heEy,
-    double bSx, double bSy, double bEx, double bEy, double *x, double *y){
+        double bSx, double bSy, double bEx, double bEy, double *x, double *y){
     if(!collinear(heSx, heSy, heEx, heEy, bSx, bSy)){
         /* Parallel, no intersection so don't set (x, y) */
         return DOESNT_INTERSECT;
@@ -325,10 +325,10 @@ enum intersectType parallelIntersects(double heSx, double heSy, double heEx, dou
 }
 
 enum intersectType intersects(struct halfEdge *he, struct bisector *b, 
-    struct DCEL *dcel, double minLength, double *x, double *y);
+        struct DCEL *dcel, double minLength, double *x, double *y);
 
 enum intersectType intersects(struct halfEdge *he, struct bisector *b, 
-    struct DCEL *dcel, double minLength, double *x, double *y){
+        struct DCEL *dcel, double minLength, double *x, double *y){
 
     /* Half-edge x, y pair */
     double heSx = dcel->vertices[he->startVertex].x;
@@ -382,9 +382,9 @@ enum intersectType intersects(struct halfEdge *he, struct bisector *b,
     
     /* Here we calculate ad - bc */
     denominator = heSx * (bEy  -  bSy) +
-                  heEx * (bSy  -  bEy) +
-                  bEx  * (heEy - heSy) +
-                  bSx  * (heSy - heEy);
+            heEx * (bSy  -  bEy) +
+            bEx  * (heEy - heSy) +
+            bSx  * (heSy - heEy);
     
     if(denominator == 0){
         /* In this case the two are parallel */
@@ -398,8 +398,8 @@ enum intersectType intersects(struct halfEdge *he, struct bisector *b,
     |                            |  | bSy - heSy |
     */
     numeratorX = heSx * (bEy  -  bSy) +
-                 bSx  * (heSy -  bEy) +
-                 bEx  * (bSy  - heSy);
+            bSx  * (heSy -  bEy) +
+            bEx  * (bSy  - heSy);
     
     /*
     Here we calculate the bottom row.
@@ -408,8 +408,8 @@ enum intersectType intersects(struct halfEdge *he, struct bisector *b,
     | heSy - heEy    heEx - heSx |  | bSy - heSy |
     */
     numeratorY = -(heSx * (bSy  -  heEy) +
-                   heEx * (heSy -  bSy) +
-                   bSx  * (heEy  - heSy));
+            heEx * (heSy -  bSy) +
+            bSx  * (heEy  - heSy));
     
     /* Use parameters to convert to the intersection point */
     t1 = numeratorX/denominator;
@@ -437,7 +437,7 @@ enum intersectType intersects(struct halfEdge *he, struct bisector *b,
 char *getIntersectionString(struct intersection *intersection){
 
     if(! intersection){
-      return NULL;
+        return NULL;
     }
 
     char *returnString = (char*)malloc(MAX_BUFFER_SIZE);
@@ -446,27 +446,27 @@ char *getIntersectionString(struct intersection *intersection){
     if(! intersection->multipleIntersects){
 
         int stringLength = snprintf(returnString, MAX_BUFFER_SIZE,
-            "From Edge %d (%lf, %lf) to Edge %d (%lf, %lf)", 
-            intersection->edge_i, intersection->vertex_i.x, intersection->vertex_i.y,
-            intersection->edge_f, intersection->vertex_f.x, intersection->vertex_f.y);
+                                    "From Edge %d (%lf, %lf) to Edge %d (%lf, %lf)",
+                                    intersection->edge_i, intersection->vertex_i.x, intersection->vertex_i.y,
+                                    intersection->edge_f, intersection->vertex_f.x, intersection->vertex_f.y);
         free(returnString);
         returnString = (char *) malloc(sizeof(char) * (stringLength + 1));
         assert(returnString);
         sprintf(returnString, "From Edge %d (%lf, %lf) to Edge %d (%lf, %lf)",
-            intersection->edge_i, intersection->vertex_i.x, intersection->vertex_i.y,
-            intersection->edge_f, intersection->vertex_f.x, intersection->vertex_f.y);
+                intersection->edge_i, intersection->vertex_i.x, intersection->vertex_i.y,
+                intersection->edge_f, intersection->vertex_f.x, intersection->vertex_f.y);
     } else {
 
         int stringLength = snprintf(returnString, MAX_BUFFER_SIZE,
-            "From Edge %d (%lf, %lf) to Edge %d (%lf, %lf)",
-            intersection->edge_i, intersection->vertex_i.x, intersection->vertex_i.y,
-            intersection->edge_f, intersection->vertex_f.x, intersection->vertex_f.y);
+                                    "From Edge %d (%lf, %lf) to Edge %d (%lf, %lf)",
+                                    intersection->edge_i, intersection->vertex_i.x, intersection->vertex_i.y,
+                                    intersection->edge_f, intersection->vertex_f.x, intersection->vertex_f.y);
         free(returnString);
         returnString = (char *) malloc(sizeof(char) * (stringLength + 1));
         assert(returnString);
         sprintf(returnString, "From Edge %d (%lf, %lf) to Edge %d (%lf, %lf)",
-            intersection->edge_i, intersection->vertex_i.x, intersection->vertex_i.y,
-            intersection->edge_f, intersection->vertex_f.x, intersection->vertex_f.y);
+                intersection->edge_i, intersection->vertex_i.x, intersection->vertex_i.y,
+                intersection->edge_f, intersection->vertex_f.x, intersection->vertex_f.y);
     }
     return returnString;
 }
@@ -524,12 +524,12 @@ void ensureSpaceForVertex(struct DCEL *dcel);
 void ensureSpaceForVertex(struct DCEL *dcel){
     if(! (dcel->vertices)){
         dcel->vertices = (struct vertex *) 
-            malloc(sizeof(struct vertex) * INITIALVERTICES);
+                malloc(sizeof(struct vertex) * INITIALVERTICES);
         assert(dcel->vertices);
         dcel->verticesAllocated = INITIALVERTICES;
     } else if((dcel->verticesUsed + 1) > dcel->verticesAllocated){
         dcel->vertices = (struct vertex *) realloc(dcel->vertices, 
-            sizeof(struct vertex) * dcel->verticesAllocated * 2);
+                sizeof(struct vertex) * dcel->verticesAllocated * 2);
         assert(dcel->vertices);
         dcel->verticesAllocated = dcel->verticesAllocated * 2;
     }
@@ -541,12 +541,12 @@ void ensureSpaceForEdge(struct DCEL *dcel);
 void ensureSpaceForEdge(struct DCEL *dcel){
     if(! (dcel->edges)){
         dcel->edges = (struct edge *) 
-            malloc(sizeof(struct edge) * INITIALEDGES);
+                malloc(sizeof(struct edge) * INITIALEDGES);
         assert(dcel->edges);
         dcel->edgesAllocated = INITIALEDGES;
     } else if((dcel->edgesUsed + 1) > dcel->edgesAllocated){
         dcel->edges = (struct edge *) realloc(dcel->edges, 
-            sizeof(struct edge) * dcel->edgesAllocated * 2);
+                sizeof(struct edge) * dcel->edgesAllocated * 2);
         assert(dcel->edges);
         dcel->edgesAllocated = dcel->edgesAllocated * 2;
     }
@@ -558,12 +558,12 @@ void ensureSpaceForFace(struct DCEL *dcel);
 void ensureSpaceForFace(struct DCEL *dcel){
     if(! (dcel->faces)){
         dcel->faces = (struct face *) 
-            malloc(sizeof(struct face) * INITIALFACES);
+                malloc(sizeof(struct face) * INITIALFACES);
         assert(dcel->faces);
         dcel->facesAllocated = INITIALFACES;
     } else if((dcel->facesUsed + 1) > dcel->facesAllocated){
         dcel->faces = (struct face *) realloc(dcel->faces, 
-            sizeof(struct face) * dcel->facesAllocated * 2);
+                sizeof(struct face) * dcel->facesAllocated * 2);
         assert(dcel->faces);
         dcel->facesAllocated = dcel->facesAllocated * 2;
     }
@@ -649,10 +649,10 @@ struct DCEL *readPolygonFile(char *polygonfileName){
             addEdge(dcel, startVertex, endVertex);
             /* Connect last edge added to newest edge */
             ((dcel->edges)[dcel->edgesUsed - 2].halfEdge)->next = 
-                (dcel->edges)[dcel->edgesUsed - 1].halfEdge;
+                    (dcel->edges)[dcel->edgesUsed - 1].halfEdge;
             /* Connect newest edge to last edge added */
             ((dcel->edges)[dcel->edgesUsed - 1].halfEdge)->prev = 
-                (dcel->edges)[dcel->edgesUsed - 2].halfEdge;
+                    (dcel->edges)[dcel->edgesUsed - 2].halfEdge;
         }
     }
     
@@ -662,10 +662,10 @@ struct DCEL *readPolygonFile(char *polygonfileName){
     addEdge(dcel, endVertex, firstVertex);
     /* Connect previous edge to this edge. */
     ((dcel->edges)[dcel->edgesUsed - 2].halfEdge)->next = 
-        (dcel->edges)[dcel->edgesUsed - 1].halfEdge;
+            (dcel->edges)[dcel->edgesUsed - 1].halfEdge;
     /* Connect newest edge to last edge added */
     ((dcel->edges)[dcel->edgesUsed - 1].halfEdge)->prev = 
-        (dcel->edges)[dcel->edgesUsed - 2].halfEdge;
+            (dcel->edges)[dcel->edgesUsed - 2].halfEdge;
     
     /* Connect final edge back to start edge. */
     ((dcel->edges)[finalEdge].halfEdge)->next = (dcel->edges)[firstEdge].halfEdge;
@@ -1457,11 +1457,11 @@ int inFace(struct DCEL *dcel, double x, double y, int faceIndex){
             /* Doesn't matter where the point is until we find it on one side or the 
             other. */
             direction = getRelativeDir(x, y, &(dcel->vertices)[current->startVertex],
-                &(dcel->vertices)[current->endVertex]);
+                                       &(dcel->vertices)[current->endVertex]);
         } else {
             if(! directionOrUndecided(direction, 
-                getRelativeDir(x, y, &(dcel->vertices)[current->startVertex],
-                    &(dcel->vertices)[current->endVertex]))){
+                                      getRelativeDir(x, y, &(dcel->vertices)[current->startVertex],
+                                                     &(dcel->vertices)[current->endVertex]))){
                 /* If the point is on the different side of any edge, it be inside 
                     the face, because the face is convex. */
                 return 0;
@@ -1544,7 +1544,7 @@ int DCELhasEdgePair(struct DCEL *dcel, int edge){
 }
 
 struct intersection *getIntersection(struct bisector *b, struct DCEL *dcel, int face,
-    double minLength){
+        double minLength){
 
     struct halfEdge *curr = dcel->faces[face].he;
     struct intersection *intersection = (struct intersection*)malloc(sizeof(struct intersection));
@@ -1625,39 +1625,107 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
             }
         }
 
+        int newFace = dcel->facesUsed;
+
+        printf("init face: %d\n", nextFace);
+
+        struct halfEdge *startFaceEdge = NULL;
+        struct halfEdge *startJoinEdge = NULL;
         struct halfEdge *currJoinEdge = NULL;
         struct halfEdge *prevJoinEdge = NULL;
         struct halfEdge *nextFaceEdge = NULL;
-        struct halfEdge *prevFaceEdge = NULL;
         struct halfEdge *clockwiseBorderEdge = NULL;
         struct halfEdge *counterClockwiseBorderEdge = NULL;
+        int connectsToBorder = 0;
+
+        int i = 0;
 
         do {
 
+            // if nextFaceEdge is null, we have reached the border, continue splits from starting face but now going
+            // counterclockwise, or if we were already doing that just break from the loop
+            if (! nextFaceEdge && startFaceEdge != NULL) {
+                if (! connectsToBorder) {
+                    connectsToBorder = 1;
+                    clockwiseBorderEdge = dcel->edges[dcel->edgesUsed - 2].halfEdge;
+                    nextFaceEdge = startFaceEdge->pair;
+                    prevJoinEdge = startJoinEdge;
+                    printf("connectsToBorder switched to true\n");
+                }
+                if (! nextFaceEdge && connectsToBorder) {
+                    counterClockwiseBorderEdge = dcel->edges[dcel->edgesUsed - 1].halfEdge;
+                    printf("exited from border case\n");
+                    break;
+                }
+            }
+
+            if (nextFaceEdge != NULL) {
+                nextFace = nextFaceEdge->face;
+            }
+
+            printf("loop iteration: %d, face: %d, connectsToBorder: %d\n",
+                   i++, nextFace, connectsToBorder);
+
+            // split along bisector between intersects
             executeBisectorIntersectsSplit(dcel, wt, nextFace);
+
+            printf("split completed succesfully\n");
+            //printDcel(dcel);
 
             // edgesUsed - 3 corresponds to the join edge from the last split
             currJoinEdge = dcel->edges[dcel->edgesUsed - 3].halfEdge->pair;
 
+            // link up current and previous new faces
             if (prevJoinEdge != NULL) {
-                prevJoinEdge->next = currJoinEdge;
-                currJoinEdge->prev = prevJoinEdge;
+                if (! connectsToBorder) {
+                    prevJoinEdge->next = currJoinEdge;
+                    currJoinEdge->prev = prevJoinEdge;
+                }
+                else {
+                    prevJoinEdge->prev = currJoinEdge;
+                    currJoinEdge->next = prevJoinEdge;
+                }
+            }
+            else {
+                startFaceEdge = currJoinEdge->prev;
+                startJoinEdge = currJoinEdge;
             }
 
+            // set half edge pointer for twin edge of end edge of last split
             prevJoinEdge = currJoinEdge;
-            nextFaceEdge = dcel->edges[dcel->edgesUsed - 2].halfEdge->pair;
-            nextFace = nextFaceEdge->face;
+            if (! connectsToBorder) {
+                nextFaceEdge = dcel->edges[dcel->edgesUsed - 2].halfEdge->pair;
+            }
+            else {
+                nextFaceEdge = dcel->edges[dcel->edgesUsed - 1].halfEdge->pair;
+            }
 
-        } while(nextFaceEdge != NULL);
+        } while(nextFaceEdge != startFaceEdge);
 
-        clockwiseBorderEdge = dcel->edges[dcel->edgesUsed - 2].halfEdge;
+        // link up either first and last join edges, or border half edges
+        if (startJoinEdge == currJoinEdge) {
+            /* do nothing */
+        }
+        else if (connectsToBorder) {
+            while (! clockwiseBorderEdge->next->pair) {
+                clockwiseBorderEdge = clockwiseBorderEdge->next;
+            }
+            while (! counterClockwiseBorderEdge->next->pair) {
+                counterClockwiseBorderEdge = counterClockwiseBorderEdge->next;
+            }
+            clockwiseBorderEdge->next = counterClockwiseBorderEdge;
+            counterClockwiseBorderEdge->prev = clockwiseBorderEdge;
+        }
+        else {
+            currJoinEdge->next = startJoinEdge;
+            startJoinEdge->prev = currJoinEdge;
+        }
+
+        dcel->faces[newFace].wt = wt;
 
     }
 
-
-
-
-
+    //printDcel(dcel);
 
 }
 
@@ -1789,4 +1857,3 @@ void printVertex(struct DCEL *dcel, int vertexIndex) {
            dcel->vertices[vertexIndex].y,
            vertexIndex);
 }
-

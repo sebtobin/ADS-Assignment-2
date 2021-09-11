@@ -292,10 +292,10 @@ enum intersectType intersects(struct halfEdge *he, struct bisector *b,
     double heEy = dcel->vertices[he->endVertex].y;
     
     /* Bisector x, y pair */
-    double bSx = ... ;
-    double bSy = ... ;
-    double bEx = ... ;
-    double bEy = ... ;
+    double bSx = 0;
+    double bSy = 0;
+    double bEx = 0;
+    double bEy = 0;
     
     /* Fill in segment. */
     

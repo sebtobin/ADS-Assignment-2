@@ -209,7 +209,7 @@ int main(int argc, char **argv){
             }
 
             printDcel(dcel);
-            
+
             #ifdef USE_GUI
             /* Visualisation: Points */
             pointCount = watchTowerCount;

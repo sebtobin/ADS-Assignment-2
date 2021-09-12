@@ -1636,6 +1636,7 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
         struct halfEdge *nextFaceEdge = NULL;
         struct halfEdge *clockwiseBorderEdge = NULL;
         struct halfEdge *counterClockwiseBorderEdge = NULL;
+        struct halfEdge *temp = NULL;
         int connectsToBorder = 0;
 
         int i = 0;
@@ -1707,35 +1708,49 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
 
         // link up either first and last join edges, or border half edges
         if (startJoinEdge == currJoinEdge) {
-            /* do nothing */
-        }
-        else if (connectsToBorder) {
-
-            while (clockwiseBorderEdge != counterClockwiseBorderEdge) {
-
-                if (clockwiseBorderEdge->next->pair != NULL) {
-                    clockwiseBorderEdge->next = clockwiseBorderEdge->next->pair->next;
-                    clockwiseBorderEdge->next->prev = clockwiseBorderEdge;
-                }
-                clockwiseBorderEdge = clockwiseBorderEdge->next;
-            }
-
-            /*
-            while (! counterClockwiseBorderEdge->prev->pair) {
-                counterClockwiseBorderEdge = counterClockwiseBorderEdge->prev;
-            }
-            counterClockwiseBorderEdge->prev = counterClockwiseBorderEdge->prev->pair->prev;
-            counterClockwiseBorderEdge->prev->pair->prev->next = counterClockwiseBorderEdge;
-             */
-
+            // do nothing, special case of 2nd watchtower
         }
         else {
-            currJoinEdge->next = startJoinEdge;
-            startJoinEdge->prev = currJoinEdge;
+            if (connectsToBorder) {
+
+                while (clockwiseBorderEdge != counterClockwiseBorderEdge) {
+
+                    if (clockwiseBorderEdge->next->pair != NULL) {
+
+                        clockwiseBorderEdge->next = clockwiseBorderEdge->next->pair->next->next;
+
+                        // commented out to prevent segfault when printing or visualising, until cleanup implemented
+                        //clockwiseBorderEdge->next->prev->prev->next = NULL;
+                        //free(clockwiseBorderEdge->next->prev);
+
+                        clockwiseBorderEdge->next->prev = clockwiseBorderEdge;
+                        clockwiseBorderEdge->endVertex = clockwiseBorderEdge->next->startVertex;
+                    }
+                    clockwiseBorderEdge = clockwiseBorderEdge->next;
+                }
+            }
+            else {
+                //currJoinEdge->next = startJoinEdge;
+                //startJoinEdge->prev = currJoinEdge;
+            }
+            /*
+            for (i=newFace; i<dcel->facesUsed; i++) {
+                if ((temp = dcel->faces[i].he) != NULL && temp->next->pair != NULL) {
+                    temp->next = temp->next->pair->next;
+                    temp->next->prev->prev->next = NULL;
+                    free(temp->next->prev->pair);
+                    free(temp->next->prev);
+                    temp->next->prev = temp;
+                }
+            }
+             */
         }
+
+        setFaceIndex(dcel, dcel->faces[newFace].he, newFace);
 
         dcel->faces[newFace].wt = wt;
         wt->face = newFace;
+        dcel->facesUsed = newFace + 1;
 
     }
 
@@ -1781,6 +1796,17 @@ void reverseSplit(struct split* split){
     split->endEdge = tempIndex;
     split->endSplitPoint = tempVertex;
 
+}
+
+void setFaceIndex(struct DCEL *dcel, struct halfEdge *curr, int face) {
+
+    int initVert = curr->startVertex;
+
+    // traverse circular linked list, set each face index, until returning to the first halfEdge
+    do {
+        curr->face = face;
+        curr = curr->next;
+    } while (curr->startVertex != initVert);
 }
 
 void printBisector(struct bisector *b){

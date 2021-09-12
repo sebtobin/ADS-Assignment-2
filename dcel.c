@@ -1588,21 +1588,39 @@ struct intersection *getIntersection(struct bisector *b, struct DCEL *dcel, int 
 }
 
 double getDiameter(struct DCEL *dcel, int faceIndex){
-    /* 
-    
-    
-    
-    
-    Fill in
-    
-    
-    
-    
-    */
 
+    struct halfEdge *outer = dcel->faces[faceIndex].he;
 
+    if (outer->face != faceIndex) {
+        outer = outer->pair;
+    }
 
-    return NODIAMETER;
+    struct halfEdge *inner = outer->next;
+    struct vertex v1, v2;
+    int initStartVert = outer->startVertex;
+    double max = 0, distance;
+
+    do {
+
+        do {
+
+            v1 = dcel->vertices[outer->startVertex];
+            v2 = dcel->vertices[inner->startVertex];
+
+            if (( distance = sqrt( pow(v2.x - v1.x, 2) + pow(v2.y - v1.y, 2) ) ) > max) {
+                max = distance;
+            }
+
+            inner = inner->next;
+
+        } while (inner->startVertex != initStartVert);
+
+        outer = outer->next;
+        inner = outer->next;
+
+    } while (outer->startVertex != initStartVert);
+
+    return max;
 }
 
 void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
@@ -1611,6 +1629,7 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
     if (dcel->facesUsed == 1 && ! dcel->faces[0].wt) {
 
         dcel->faces[0].wt = wt;
+        wt->face = 0;
 
     }
     // general case for adding a 2nd or above watchtower, starts by executing

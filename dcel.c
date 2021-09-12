@@ -1156,12 +1156,12 @@ struct halfEdge* applySplit(struct split *split, struct DCEL *dcel){
         }
     } else if(startVertexOverlap == ENDOFEDGE && endVertexOverlap == STARTOFEDGE){
         /* 1a and 2a co-occur */
-        struct halfEdge *nextHE = newMidHEToEnd->next;
-        if(nextHE == newStartHEToMid){
+        struct halfEdge *nextHE = newStartHEToMid->next;
+        if(nextHE == newMidHEToEnd){
             nextHE = newJoinHEPair;
         }
-        struct halfEdge *prevHE = newStartHEToMid->prev;
-        if(prevHE == newMidHEToEnd){
+        struct halfEdge *prevHE = newMidHEToEnd->prev;
+        if(prevHE == newStartHEToMid){
             prevHE = newJoinHEPair;
         }
 
@@ -1650,13 +1650,9 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
 
         printf("init face: %d\n", nextFace);
 
-        struct halfEdge *startFaceEdge = NULL;
         struct halfEdge *startJoinEdge = NULL;
         struct halfEdge *currJoinEdge = NULL;
-        struct halfEdge *prevJoinEdge = NULL;
         struct halfEdge *nextFaceEdge = NULL;
-        struct halfEdge *clockwiseBorderEdge = NULL;
-        struct halfEdge *counterClockwiseBorderEdge = NULL;
         struct halfEdge *temp = NULL;
         int connectsToBorder = 0;
 
@@ -1666,10 +1662,10 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
 
             // if nextFaceEdge is null, we have reached the border, continue splits from starting face but now going
             // counterclockwise, or if we were already doing that just break from the loop
-            if (! nextFaceEdge && startFaceEdge != NULL) {
+            if (! nextFaceEdge && startJoinEdge != NULL) {
                 if (! connectsToBorder) {
                     connectsToBorder = 1;
-                    nextFaceEdge = startFaceEdge->pair;
+                    nextFaceEdge = startJoinEdge->prev->pair;
                     printf("connectsToBorder switched to true\n");
                 }
                 if (! nextFaceEdge && connectsToBorder) {
@@ -1694,8 +1690,8 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
 
             // link up current and previous new faces
 
-            if (! startFaceEdge) {
-                startFaceEdge = currJoinEdge->prev;
+            if (! startJoinEdge) {
+                startJoinEdge = currJoinEdge;
             }
 
             // set half edge pointer for twin edge of end edge of last split
@@ -1706,7 +1702,7 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
                 nextFaceEdge = currJoinEdge->prev->pair;
             }
 
-        } while(nextFaceEdge != startFaceEdge);
+        } while(nextFaceEdge != startJoinEdge->prev);
 
         // link up either first and last join edges, or border half edges
         if (startJoinEdge == currJoinEdge) {

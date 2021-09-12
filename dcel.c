@@ -1647,7 +1647,7 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
             if (! nextFaceEdge && startFaceEdge != NULL) {
                 if (! connectsToBorder) {
                     connectsToBorder = 1;
-                    clockwiseBorderEdge = dcel->edges[dcel->edgesUsed - 2].halfEdge;
+                    clockwiseBorderEdge = prevJoinEdge->next;
                     nextFaceEdge = startFaceEdge->pair;
                     prevJoinEdge = startJoinEdge;
                     printf("connectsToBorder switched to true\n");
@@ -1670,7 +1670,10 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
             executeBisectorIntersectsSplit(dcel, wt, nextFace);
 
             printf("split completed succesfully\n");
+
             //printDcel(dcel);
+
+
 
             // edgesUsed - 3 corresponds to the join edge from the last split
             currJoinEdge = dcel->edges[dcel->edgesUsed - 3].halfEdge->pair;
@@ -1707,14 +1710,24 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
             /* do nothing */
         }
         else if (connectsToBorder) {
-            while (! clockwiseBorderEdge->next->pair) {
+
+            while (clockwiseBorderEdge != counterClockwiseBorderEdge) {
+
+                if (clockwiseBorderEdge->next->pair != NULL) {
+                    clockwiseBorderEdge->next = clockwiseBorderEdge->next->pair->next;
+                    clockwiseBorderEdge->next->prev = clockwiseBorderEdge;
+                }
                 clockwiseBorderEdge = clockwiseBorderEdge->next;
             }
-            while (! counterClockwiseBorderEdge->next->pair) {
-                counterClockwiseBorderEdge = counterClockwiseBorderEdge->next;
+
+            /*
+            while (! counterClockwiseBorderEdge->prev->pair) {
+                counterClockwiseBorderEdge = counterClockwiseBorderEdge->prev;
             }
-            clockwiseBorderEdge->next = counterClockwiseBorderEdge;
-            counterClockwiseBorderEdge->prev = clockwiseBorderEdge;
+            counterClockwiseBorderEdge->prev = counterClockwiseBorderEdge->prev->pair->prev;
+            counterClockwiseBorderEdge->prev->pair->prev->next = counterClockwiseBorderEdge;
+             */
+
         }
         else {
             currJoinEdge->next = startJoinEdge;
@@ -1722,10 +1735,9 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
         }
 
         dcel->faces[newFace].wt = wt;
+        wt->face = newFace;
 
     }
-
-    //printDcel(dcel);
 
 }
 

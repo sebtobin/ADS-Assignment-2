@@ -1710,12 +1710,19 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
         }
         else {
             /* general case for 3rd or greater watchtower, where cleanup may be needed */
+
+            for (i=newFace; i<dcel->facesUsed; i++) {
+                printHalfEdge(dcel, dcel->faces[i].he);
+            }
         }
 
         //setFaceIndex(dcel, dcel->faces[newFace].he, newFace);
 
         dcel->faces[newFace].wt = wt;
         wt->face = newFace;
+
+        //printf("new face: %d, faces used: %d\n", newFace, dcel->facesUsed);
+
         //dcel->facesUsed = newFace + 1;
 
     }

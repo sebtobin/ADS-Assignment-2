@@ -1654,7 +1654,7 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
         struct halfEdge *startJoinEdge = NULL;
         struct halfEdge *currJoinEdge = NULL;
         struct halfEdge *nextFaceEdge = NULL;
-        struct halfEdge *temp = NULL;
+        struct halfEdge *curr = NULL;
         int connectsToBorder = 0;
 
         int i = 0;
@@ -1707,14 +1707,30 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
 
         // link up either first and last join edges, or border half edges
         if (startJoinEdge == currJoinEdge) {
-            // do nothing, special case of 2nd watchtower
+            // watchtower only interferes with the watchtower of the starting face
+            // so no cleanup or linkage required, doesnt account for special case
+            // where watchtower does interfere with more than just the watchtower
+            // of the starting face, but the bisector only intersects with null
+            // (border) half edges
         }
         else {
             /* general case for 3rd or greater watchtower, where cleanup may be needed */
 
-            for (i=newFace; i<dcel->facesUsed; i++) {
-                printHalfEdge(dcel, dcel->faces[i].he);
-            }
+            curr = startJoinEdge;
+
+            do {
+
+                if (curr->next->pair != NULL && (curr->next->pair->face == NOFACE || curr->next->pair->face - newFace >= 0)) {
+                    curr->next->pair->face = NOFACE;
+                    curr->next->face = NOFACE;
+                    curr->next = curr->next->pair->next;
+                    curr->next->prev = curr;
+                }
+
+                curr->face = newFace;
+                curr = curr->next;
+
+            } while(curr != startJoinEdge);
         }
 
         //setFaceIndex(dcel, dcel->faces[newFace].he, newFace);
@@ -1724,7 +1740,7 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
 
         //printf("new face: %d, faces used: %d\n", newFace, dcel->facesUsed);
 
-        //dcel->facesUsed = newFace + 1;
+        dcel->facesUsed = newFace + 1;
 
     }
 
@@ -1736,8 +1752,6 @@ struct halfEdge* executeBisectorIntersectsSplit(struct DCEL *dcel, struct watcht
     struct intersection *currIntersection = getIntersection(currBisector, dcel, face, DEFAULTMINLENGTH);
     struct split *currSplit = getSplitFromIntersect(currIntersection);
     struct halfEdge* joinEdge;
-
-    printSplit(currSplit);
 
     if(getRelativeDir(wt->x, wt->y, &currSplit->startSplitPoint, &currSplit->endSplitPoint) == INSIDE) {
         reverseSplit(currSplit);

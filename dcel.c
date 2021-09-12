@@ -1726,6 +1726,8 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
             // for border edge case, clean up border edges in new face
             if (connectsToBorder) {
 
+                int counterClockwiseSkipped = 0;
+
                 do {
 
                     // vertices on the border created by the splits have straight angles, and after linkage
@@ -1740,6 +1742,9 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
                         // link current border edge and border edge after next, set skipped edge for cleanup
                         clockwiseBorderEdge->next = clockwiseBorderEdge->next->pair->next->next;
                         clockwiseBorderEdge->next->prev->face = NOFACE;
+                        if (clockwiseBorderEdge->next->prev == counterClockwiseBorderEdge) {
+                            counterClockwiseSkipped = 1;
+                        }
                         clockwiseBorderEdge->next->prev = clockwiseBorderEdge;
                         clockwiseBorderEdge->endVertex = clockwiseBorderEdge->next->startVertex;
                     }
@@ -1749,7 +1754,7 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
                         clockwiseBorderEdge = clockwiseBorderEdge->next;
                     }
 
-                } while (clockwiseBorderEdge != counterClockwiseBorderEdge);
+                } while (clockwiseBorderEdge != counterClockwiseBorderEdge && ! counterClockwiseSkipped);
             }
 
             struct halfEdge *curr = startJoinEdge;

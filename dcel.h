@@ -111,9 +111,6 @@ void reverseSplit(struct split* split);
  */
 struct halfEdge* executeBisectorIntersectsSplit(struct DCEL *dcel, struct watchtowerStruct *wt, int face);
 
-/* sets the face index to all half edges in the face */
-void setFaceIndex(struct DCEL *dcel, struct halfEdge *curr, int face);
-
 /* prints info of a bisector */
 void printBisector(struct bisector *b);
 

@@ -722,7 +722,7 @@ struct halfEdge* applySplit(struct split *split, struct DCEL *dcel){
     double midpointY;
     struct halfEdge *startHE;
     struct halfEdge *endHE;
-    struct halfEdge *newJoinHE;
+    struct halfEdge *newJoinHE = NULL;
     struct halfEdge *newJoinHEPair;
     struct halfEdge *newStartHEToMid;
     struct halfEdge *newStartHEToMidPair;
@@ -1647,6 +1647,7 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
             }
         }
 
+        // the index of the new face once complete
         int newFace = dcel->facesUsed;
 
         printf("init face: %d\n", nextFace);
@@ -1654,11 +1655,16 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
         struct halfEdge *startJoinEdge = NULL;
         struct halfEdge *currJoinEdge = NULL;
         struct halfEdge *nextFaceEdge = NULL;
-        struct halfEdge *curr = NULL;
+        struct halfEdge *clockwiseBorderEdge = NULL;
+        struct halfEdge *counterClockwiseBorderEdge = NULL;
         int connectsToBorder = 0;
-
         int i = 0;
 
+        // starting from the face in which the new watchtower is located, execute a split, if the starting edge of
+        // the split has a twin, repeat with the face to which that twin edge belongs, this iteration goes clockwise
+        // about all faces with this twin edge; if returning to the starting face, break, if it reaches a face where
+        // the starting edge has no twin, it has reached the border, continue counterclockwise from starting face
+        // until it reaches the border again, than break
         do {
 
             // if nextFaceEdge is null, we have reached the border, continue splits from starting face but now going
@@ -1666,15 +1672,19 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
             if (! nextFaceEdge && startJoinEdge != NULL) {
                 if (! connectsToBorder) {
                     connectsToBorder = 1;
+                    clockwiseBorderEdge = currJoinEdge->next;
                     nextFaceEdge = startJoinEdge->prev->pair;
                     printf("connectsToBorder switched to true\n");
                 }
                 if (! nextFaceEdge && connectsToBorder) {
+                    counterClockwiseBorderEdge = currJoinEdge->prev;
                     printf("exited from border case\n");
                     break;
                 }
             }
 
+            // set face index for next split, if statement prevents this from happening on the first loo[
+            // where nextFaceEdge is NULL and nextFace has been set as the initial face
             if (nextFaceEdge != NULL) {
                 nextFace = nextFaceEdge->face;
             }
@@ -1687,10 +1697,7 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
 
             printf("split completed succesfully\n");
 
-            //printDcel(dcel);
-
-            // link up current and previous new faces
-
+            // if on first loop, set startJoinEdge (used for border edge case and cleanup)
             if (! startJoinEdge) {
                 startJoinEdge = currJoinEdge;
             }
@@ -1705,7 +1712,7 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
 
         } while(nextFaceEdge != startJoinEdge->prev);
 
-        // link up either first and last join edges, or border half edges
+        // linkup new faces and cleanup garbage edges
         if (startJoinEdge == currJoinEdge) {
             // watchtower only interferes with the watchtower of the starting face
             // so no cleanup or linkage required, doesnt account for special case
@@ -1713,33 +1720,85 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
             // of the starting face, but the bisector only intersects with null
             // (border) half edges
         }
+        // general case for 3rd or greater watchtower
         else {
-            /* general case for 3rd or greater watchtower, where cleanup may be needed */
 
-            curr = startJoinEdge;
+            // for border edge case, clean up border edges in new face
+            if (connectsToBorder) {
+
+                do {
+
+                    // vertices on the border created by the splits have straight angles, and after linkage
+                    // become redundant, for each of these cases link border half edge to edge after next,
+                    // skipped half edge has face set to NOFACE
+                    if (clockwiseBorderEdge->next->pair != NULL) {
+
+                        // set redundant internal edges for cleanup
+                        clockwiseBorderEdge->next->pair->face = NOFACE;
+                        clockwiseBorderEdge->next->face = NOFACE;
+
+                        // link current border edge and border edge after next, set skipped edge for cleanup
+                        clockwiseBorderEdge->next = clockwiseBorderEdge->next->pair->next->next;
+                        clockwiseBorderEdge->next->prev->face = NOFACE;
+                        clockwiseBorderEdge->next->prev = clockwiseBorderEdge;
+                        clockwiseBorderEdge->endVertex = clockwiseBorderEdge->next->startVertex;
+                    }
+                    // only set next pointer on loops where no redundant vertex is found, so multiple
+                    // collinear redundant vertices can have the edges between them collapsed into one
+                    else {
+                        clockwiseBorderEdge = clockwiseBorderEdge->next;
+                    }
+
+                } while (clockwiseBorderEdge != counterClockwiseBorderEdge);
+            }
+
+            struct halfEdge *curr = startJoinEdge;
+            struct halfEdge *temp = NULL;
 
             do {
 
+                // if next half edge has a pair which is part of the newly created faces, then link current half edge,
+                // which must be the join edge of a split that occurred in this incrementVoronoi call, to the join edge
+                // of the next split in a clockwise direction; set redundant internal edges face index to NOFACE
                 if (curr->next->pair != NULL && (curr->next->pair->face == NOFACE || curr->next->pair->face - newFace >= 0)) {
+
+                    temp = curr->next;
+                    i = 0;
+
+                    // traverse through current face, cleaning up any non newly created internal edges, that is,
+                    // edges that were present before any splits that were effected in this incrementVoronoi call
+                    do {
+                        if (i >= 2) {
+                            temp->prev->face = NOFACE;
+                        }
+                        i++;
+                        temp = temp->prev;
+                    } while (temp != curr->prev);
+
+                    // set face indices for cleanup
                     curr->next->pair->face = NOFACE;
                     curr->next->face = NOFACE;
+
+                    // linking join edges
                     curr->next = curr->next->pair->next;
                     curr->next->prev = curr;
                 }
 
+                // set face index of current edge to newFace
                 curr->face = newFace;
                 curr = curr->next;
 
             } while(curr != startJoinEdge);
         }
 
-        //setFaceIndex(dcel, dcel->faces[newFace].he, newFace);
-
+        // store watchtower in face and vice versa
         dcel->faces[newFace].wt = wt;
         wt->face = newFace;
 
-        //printf("new face: %d, faces used: %d\n", newFace, dcel->facesUsed);
-
+        // set redundant face half edge pointers to null and cleanup faces
+        for (i=dcel->facesUsed-1; i>newFace; i--) {
+            dcel->faces[i].he = NULL;
+        }
         dcel->facesUsed = newFace + 1;
 
     }
@@ -1791,17 +1850,6 @@ void reverseSplit(struct split* split){
     split->endEdge = tempIndex;
     split->endSplitPoint = tempVertex;
 
-}
-
-void setFaceIndex(struct DCEL *dcel, struct halfEdge *curr, int face) {
-
-    int initVert = curr->startVertex;
-
-    // traverse circular linked list, set each face index, until returning to the first halfEdge
-    do {
-        curr->face = face;
-        curr = curr->next;
-    } while (curr->startVertex != initVert);
 }
 
 void printBisector(struct bisector *b){

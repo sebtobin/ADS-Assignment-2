@@ -1716,11 +1716,11 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
             /* general case for 3rd or greater watchtower, where cleanup may be needed */
         }
 
-        setFaceIndex(dcel, dcel->faces[newFace].he, newFace);
+        //setFaceIndex(dcel, dcel->faces[newFace].he, newFace);
 
         dcel->faces[newFace].wt = wt;
         wt->face = newFace;
-        dcel->facesUsed = newFace + 1;
+        //dcel->facesUsed = newFace + 1;
 
     }
 

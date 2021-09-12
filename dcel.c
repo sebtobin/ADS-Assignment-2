@@ -1569,6 +1569,7 @@ struct intersection *getIntersection(struct bisector *b, struct DCEL *dcel, int 
             }
             else if (intersectsFound >= 2) {
                 fprintf(stderr, "too many intersects for face ind %d\n", face);
+                break;
             }
 
             // store intersection point info is either initial or final edge & vertex
@@ -1736,6 +1737,8 @@ struct halfEdge* executeBisectorIntersectsSplit(struct DCEL *dcel, struct watcht
     struct split *currSplit = getSplitFromIntersect(currIntersection);
     struct halfEdge* joinEdge;
 
+    printSplit(currSplit);
+
     if(getRelativeDir(wt->x, wt->y, &currSplit->startSplitPoint, &currSplit->endSplitPoint) == INSIDE) {
         reverseSplit(currSplit);
     }
@@ -1865,6 +1868,7 @@ void printEdge(struct DCEL *dcel, int edgeIndex) {
         printf("\n");
     }
 }
+
 // print coordinates of a vertex
 void printVertex(struct DCEL *dcel, int vertexIndex) {
 

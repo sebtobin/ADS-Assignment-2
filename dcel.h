@@ -132,4 +132,8 @@ void printEdge(struct DCEL *dcel, int edgeIndex);
 /* prints vertex data */
 void printVertex(struct DCEL *dcel, int vertexIndex);
 
+/* prints split data */
+void printSplit(struct split *split);
+
+
 

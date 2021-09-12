@@ -119,8 +119,8 @@ void getBisectorPoint(double distance, struct bisector *b, double *x, double *y)
         if (distance < 0) {
             sign = -1;
         }
-        int alpha = sign * ( sqrt(pow(distance, 2) / (1 + pow(b->grad, 2))) );
-        int beta = alpha * b->grad;
+        double alpha = sign * ( sqrt(pow(distance, 2) / (1 + pow(b->grad, 2))) );
+        double beta = alpha * b->grad;
         *x = b->mp_x - alpha;
         *y = b->mp_y - beta;
     }
@@ -1872,4 +1872,10 @@ void printVertex(struct DCEL *dcel, int vertexIndex) {
            dcel->vertices[vertexIndex].x,
            dcel->vertices[vertexIndex].y,
            vertexIndex);
+}
+
+void printSplit(struct split *split) {
+    printf("from edge %d to %d\n", split->startEdge, split->endEdge);
+    printf("starting vertex %lf, %lf\n", split->startSplitPoint.x, split->startSplitPoint.y);
+    printf("ending vertex %lf, %lf\n", split->endSplitPoint.x, split->endSplitPoint.y);
 }

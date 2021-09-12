@@ -753,29 +753,29 @@ void applySplit(struct split *split, struct DCEL *dcel){
 
     /* See if we have the required property before modifying DCEL. */
     /* Uncomment to require face is present in both edges before doing split. */
-    //if(split->enforceFace){
-    //    if(! (startHE->face == split->expectedFace ||
-    //         (startHE->pair && startHE->pair->face == split->expectedFace)) ||
-    //       ! (endHE->face == split->expectedFace ||
-    //         (endHE->pair && endHE->pair->face == split->expectedFace))
-    //      ){
-    //        int sf = startHE->face;
-    //        int ef = endHE->face;
-    //        int spf = NOFACE;
-    //        int epf = NOFACE;
-    //        if(startHE->pair){
-    //            spf = startHE->pair->face;
-    //        }
-    //        if(endHE->pair){
-    //            epf = endHE->pair->face;
-    //        }
-    //        fprintf(stderr, "Warning: Split was requested with enforceFace ON, "
-    //                        "start edge faces (%d, %d) or end edge faces (%d, %d)"
-    //                        "don't have expected face %d, no split performed\n",
-    //                sf, spf, ef, epf, split->expectedFace);
-    //        return;
-    //    }
-    //}
+    if(split->enforceFace){
+        if(! (startHE->face == split->expectedFace ||
+             (startHE->pair && startHE->pair->face == split->expectedFace)) ||
+           ! (endHE->face == split->expectedFace ||
+             (endHE->pair && endHE->pair->face == split->expectedFace))
+          ){
+            int sf = startHE->face;
+            int ef = endHE->face;
+            int spf = NOFACE;
+            int epf = NOFACE;
+            if(startHE->pair){
+                spf = startHE->pair->face;
+            }
+            if(endHE->pair){
+                epf = endHE->pair->face;
+            }
+            fprintf(stderr, "Warning: Split was requested with enforceFace ON, "
+                            "start edge faces (%d, %d) or end edge faces (%d, %d)"
+                            "don't have expected face %d, no split performed\n",
+                    sf, spf, ef, epf, split->expectedFace);
+            return;
+        }
+    }
 
     ensureSpaceForEdge(dcel);
     joinEdge = dcel->edgesUsed;
@@ -1801,6 +1801,8 @@ struct split *getSplitFromIntersect(struct intersection *intersection){
     split->startEdge = intersection->edge_i;
     split->endEdge = intersection->edge_f;
     split->verticesSpecified = 1;
+    split->enforceFace = 0;
+    // split->expectedFace =
 
     return split;
 }

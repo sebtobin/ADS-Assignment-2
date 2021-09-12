@@ -7,4 +7,5 @@ struct watchtowerStruct {
     double x;
     double y;
     int face;
+    double diameter;
 };

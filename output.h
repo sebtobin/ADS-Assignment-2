@@ -13,6 +13,9 @@ void outputResultDiameter(char *outputfileName, struct watchtowerStruct **wts, i
 void outputResultDiameterSorted(char *outputfileName, struct watchtowerStruct **wts, int wtCount, 
     struct DCEL *dcel);
 
+/* swap 2 watchtower structs, used for sorting via insertion sort */
+void wtsSwap(struct watchtowerStruct **wts1, struct watchtowerStruct **wts2);
+
 /* Returns a string for the given watchtower. */
 char *getWTDataString(struct watchtowerStruct **wts, int wtIndex);
 

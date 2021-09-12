@@ -143,7 +143,7 @@ void outputResultDiameter(char *outputfileName, struct watchtowerStruct **wts, i
         if(! wts[i]){
             continue;
         }
-        double diameter = getDiameter(dcel, wts[i]->face);
+        wts[i]->diameter = getDiameter(dcel, wts[i]->face);
         fprintf(outputfile,
             "Watchtower ID: %s, Postcode: %s, Population Served: %d, "
             "Watchtower Point of Contact Name: %s, x: %f, y: %f, Diameter of Cell: %f\n",
@@ -153,7 +153,7 @@ void outputResultDiameter(char *outputfileName, struct watchtowerStruct **wts, i
             (wts[i])->contact, 
             (wts[i])->x, 
             (wts[i])->y,
-            diameter);
+            (wts[i])->diameter);
     }
     
     fclose(outputfile);
@@ -161,13 +161,11 @@ void outputResultDiameter(char *outputfileName, struct watchtowerStruct **wts, i
 
 void outputResultDiameterSorted(char *outputfileName, struct watchtowerStruct **wts, int wtCount, 
     struct DCEL *dcel){
-    /* TODO: 
-        Fill in for Task 4:
-        Make this sorted using insertion sort.
-    */
+
+    int i, j;
+
     FILE *outputfile = fopen(outputfileName, "w");
     assert(outputfile);
-    int i;
     
     /* Must have DCEL. */
     assert(dcel);
@@ -176,20 +174,38 @@ void outputResultDiameterSorted(char *outputfileName, struct watchtowerStruct **
         if(! wts[i]){
             continue;
         }
-        double diameter = getDiameter(dcel, wts[i]->face);
+        wts[i]->diameter = getDiameter(dcel, wts[i]->face);
+    }
+
+    for (i=1; i<wtCount; i++) {
+        for (j=i-1; j>=0 && wts[j+1]->diameter < wts[j]->diameter; j--) {
+            wtsSwap(&wts[j+1], &wts[j]);
+        }
+    }
+
+    for(i = 0; i < wtCount; i++){
+        if(! wts[i]){
+            continue;
+        }
         fprintf(outputfile,
-            "Watchtower ID: %s, Postcode: %s, Population Served: %d, "
-            "Watchtower Point of Contact Name: %s, x: %f, y: %f, Diameter of Cell: %f\n",
-            (wts[i])->watchtowerID, 
-            (wts[i])->postcode, 
-            (wts[i])->populationServed, 
-            (wts[i])->contact, 
-            (wts[i])->x, 
-            (wts[i])->y,
-            diameter);
+                "Watchtower ID: %s, Postcode: %s, Population Served: %d, "
+                "Watchtower Point of Contact Name: %s, x: %f, y: %f, Diameter of Cell: %f\n",
+                (wts[i])->watchtowerID,
+                (wts[i])->postcode,
+                (wts[i])->populationServed,
+                (wts[i])->contact,
+                (wts[i])->x,
+                (wts[i])->y,
+                (wts[i])->diameter);
     }
     
     fclose(outputfile);
+}
+
+void wtsSwap(struct watchtowerStruct **wts1, struct watchtowerStruct **wts2) {
+    struct watchtowerStruct *temp = *wts1;
+    *wts1 = *wts2;
+    *wts2 = temp;
 }
 
 char *getWTDataString(struct watchtowerStruct **wts, int wtIndex){

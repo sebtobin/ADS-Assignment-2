@@ -50,7 +50,7 @@ char *getIntersectionString(struct intersection *intersection);
 void freeIntersection(struct intersection *intersection);
 
 /* Applies a given split to the DCEL. */
-void applySplit(struct split *split, struct DCEL *dcel);
+struct halfEdge* applySplit(struct split *split, struct DCEL *dcel);
 
 /* Frees the given DCEL */
 void freeDCEL(struct DCEL *dcel);
@@ -109,7 +109,7 @@ void reverseSplit(struct split* split);
 /* calculates a bisector between the watchtower at face and wt and executes
  * a split between the intersection points
  */
-void executeBisectorIntersectsSplit(struct DCEL *dcel, struct watchtowerStruct *wt, int face);
+struct halfEdge* executeBisectorIntersectsSplit(struct DCEL *dcel, struct watchtowerStruct *wt, int face);
 
 /* sets the face index to all half edges in the face */
 void setFaceIndex(struct DCEL *dcel, struct halfEdge *curr, int face);

@@ -716,7 +716,7 @@ int vertexMatch(struct vertex *v1, struct vertex *v2){
     return 1;
 }
 
-void applySplit(struct split *split, struct DCEL *dcel){
+struct halfEdge* applySplit(struct split *split, struct DCEL *dcel){
     int isAdjacent;
     double midpointX;
     double midpointY;
@@ -755,10 +755,10 @@ void applySplit(struct split *split, struct DCEL *dcel){
     /* Uncomment to require face is present in both edges before doing split. */
     if(split->enforceFace){
         if(! (startHE->face == split->expectedFace ||
-             (startHE->pair && startHE->pair->face == split->expectedFace)) ||
-           ! (endHE->face == split->expectedFace ||
-             (endHE->pair && endHE->pair->face == split->expectedFace))
-          ){
+        (startHE->pair && startHE->pair->face == split->expectedFace)) ||
+        ! (endHE->face == split->expectedFace ||
+        (endHE->pair && endHE->pair->face == split->expectedFace))
+        ){
             int sf = startHE->face;
             int ef = endHE->face;
             int spf = NOFACE;
@@ -772,8 +772,8 @@ void applySplit(struct split *split, struct DCEL *dcel){
             fprintf(stderr, "Warning: Split was requested with enforceFace ON, "
                             "start edge faces (%d, %d) or end edge faces (%d, %d)"
                             "don't have expected face %d, no split performed\n",
-                    sf, spf, ef, epf, split->expectedFace);
-            return;
+                            sf, spf, ef, epf, split->expectedFace);
+            return newJoinHE;
         }
     }
 
@@ -1307,6 +1307,8 @@ void applySplit(struct split *split, struct DCEL *dcel){
         }
     }
 
+    return newJoinHE;
+
 }
 
 void freeDCEL(struct DCEL *dcel){
@@ -1667,13 +1669,10 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
             if (! nextFaceEdge && startFaceEdge != NULL) {
                 if (! connectsToBorder) {
                     connectsToBorder = 1;
-                    clockwiseBorderEdge = prevJoinEdge->next;
                     nextFaceEdge = startFaceEdge->pair;
-                    prevJoinEdge = startJoinEdge;
                     printf("connectsToBorder switched to true\n");
                 }
                 if (! nextFaceEdge && connectsToBorder) {
-                    counterClockwiseBorderEdge = dcel->edges[dcel->edgesUsed - 1].halfEdge;
                     printf("exited from border case\n");
                     break;
                 }
@@ -1687,40 +1686,24 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
                    i++, nextFace, connectsToBorder);
 
             // split along bisector between intersects
-            executeBisectorIntersectsSplit(dcel, wt, nextFace);
+            currJoinEdge = executeBisectorIntersectsSplit(dcel, wt, nextFace)->pair;
 
             printf("split completed succesfully\n");
 
             //printDcel(dcel);
 
-
-
-            // edgesUsed - 3 corresponds to the join edge from the last split
-            currJoinEdge = dcel->edges[dcel->edgesUsed - 3].halfEdge->pair;
-
             // link up current and previous new faces
-            if (prevJoinEdge != NULL) {
-                if (! connectsToBorder) {
-                    prevJoinEdge->next = currJoinEdge;
-                    currJoinEdge->prev = prevJoinEdge;
-                }
-                else {
-                    prevJoinEdge->prev = currJoinEdge;
-                    currJoinEdge->next = prevJoinEdge;
-                }
-            }
-            else {
+
+            if (! startFaceEdge) {
                 startFaceEdge = currJoinEdge->prev;
-                startJoinEdge = currJoinEdge;
             }
 
             // set half edge pointer for twin edge of end edge of last split
-            prevJoinEdge = currJoinEdge;
             if (! connectsToBorder) {
-                nextFaceEdge = dcel->edges[dcel->edgesUsed - 2].halfEdge->pair;
+                nextFaceEdge = currJoinEdge->next->pair;
             }
             else {
-                nextFaceEdge = dcel->edges[dcel->edgesUsed - 1].halfEdge->pair;
+                nextFaceEdge = currJoinEdge->prev->pair;
             }
 
         } while(nextFaceEdge != startFaceEdge);
@@ -1730,39 +1713,7 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
             // do nothing, special case of 2nd watchtower
         }
         else {
-            if (connectsToBorder) {
-
-                while (clockwiseBorderEdge != counterClockwiseBorderEdge) {
-
-                    if (clockwiseBorderEdge->next->pair != NULL) {
-
-                        clockwiseBorderEdge->next = clockwiseBorderEdge->next->pair->next->next;
-
-                        // commented out to prevent segfault when printing or visualising, until cleanup implemented
-                        //clockwiseBorderEdge->next->prev->prev->next = NULL;
-                        //free(clockwiseBorderEdge->next->prev);
-
-                        clockwiseBorderEdge->next->prev = clockwiseBorderEdge;
-                        clockwiseBorderEdge->endVertex = clockwiseBorderEdge->next->startVertex;
-                    }
-                    clockwiseBorderEdge = clockwiseBorderEdge->next;
-                }
-            }
-            else {
-                //currJoinEdge->next = startJoinEdge;
-                //startJoinEdge->prev = currJoinEdge;
-            }
-            /*
-            for (i=newFace; i<dcel->facesUsed; i++) {
-                if ((temp = dcel->faces[i].he) != NULL && temp->next->pair != NULL) {
-                    temp->next = temp->next->pair->next;
-                    temp->next->prev->prev->next = NULL;
-                    free(temp->next->prev->pair);
-                    free(temp->next->prev);
-                    temp->next->prev = temp;
-                }
-            }
-             */
+            /* general case for 3rd or greater watchtower, where cleanup may be needed */
         }
 
         setFaceIndex(dcel, dcel->faces[newFace].he, newFace);
@@ -1775,20 +1726,23 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
 
 }
 
-void executeBisectorIntersectsSplit(struct DCEL *dcel, struct watchtowerStruct *wt, int face){
+struct halfEdge* executeBisectorIntersectsSplit(struct DCEL *dcel, struct watchtowerStruct *wt, int face){
 
     struct bisector *currBisector = getBisector(dcel->faces[face].wt->x, dcel->faces[face].wt->y, wt->x, wt->y);
     struct intersection *currIntersection = getIntersection(currBisector, dcel, face, DEFAULTMINLENGTH);
     struct split *currSplit = getSplitFromIntersect(currIntersection);
+    struct halfEdge* joinEdge;
 
     if(getRelativeDir(wt->x, wt->y, &currSplit->startSplitPoint, &currSplit->endSplitPoint) == INSIDE) {
         reverseSplit(currSplit);
     }
-    applySplit(currSplit, dcel);
+    joinEdge = applySplit(currSplit, dcel);
 
     freeBisector(currBisector);
     freeIntersection(currIntersection);
     freeSplit(currSplit);
+
+    return joinEdge;
 }
 
 struct split *getSplitFromIntersect(struct intersection *intersection){

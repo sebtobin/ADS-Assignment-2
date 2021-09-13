@@ -1679,6 +1679,15 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
                     clockwiseBorderEdge = currJoinEdge->next;
                     nextFaceEdge = startJoinEdge->prev->pair;
                     printf("connectsToBorder switched to true\n");
+
+                    // if the border is counterclockwise from the starting face, no more faces, break
+                    // needed to prevent edge case of starting from the face that connects to the border on the
+                    // counterclockwise side
+                    if (! nextFaceEdge) {
+                        counterClockwiseBorderEdge = startJoinEdge->prev;
+                        printf("exited from border case\n");
+                        break;
+                    }
                 }
                 if (! nextFaceEdge && connectsToBorder) {
                     counterClockwiseBorderEdge = currJoinEdge->prev;

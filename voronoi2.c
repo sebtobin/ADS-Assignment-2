@@ -287,6 +287,8 @@ int main(int argc, char **argv){
                 (int (*)(void *, int)) &DCELhasEdgePair
             );
             #endif
+
+            printDcel(dcel);
             
             break;
             

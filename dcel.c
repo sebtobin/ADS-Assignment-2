@@ -1556,6 +1556,7 @@ struct intersection *getIntersection(struct bisector *b, struct DCEL *dcel, int 
 
     intersection->multipleIntersects = 0;
 
+
     do {
 
         if (intersects(curr, b, dcel, minLength, &intersectPoint.x, &intersectPoint.y) != DOESNT_INTERSECT) {
@@ -1563,10 +1564,11 @@ struct intersection *getIntersection(struct bisector *b, struct DCEL *dcel, int 
             intersectsFound++;
 
             // store int bool to determine if there were 2 intersections points
-            // otherwise there is a single point (END_OVERLAP case)
+            // otherwise there is a single point (not used but might be useful)
             if (intersectsFound == 2) {
                 intersection->multipleIntersects = 1;
             }
+            // as polygons are strictly convex, there should be max 2 intersections
             else if (intersectsFound >= 2) {
                 fprintf(stderr, "too many intersects for face ind %d\n", face);
                 break;
@@ -1603,6 +1605,7 @@ double getDiameter(struct DCEL *dcel, int faceIndex){
     int initStartVert = outer->startVertex;
     double max = 0, distance;
 
+    // pairwise calculate distance between every vertex in the face
     do {
 
         do {
@@ -1610,6 +1613,7 @@ double getDiameter(struct DCEL *dcel, int faceIndex){
             v1 = dcel->vertices[outer->startVertex];
             v2 = dcel->vertices[inner->startVertex];
 
+            // store the greatest distance
             if (( distance = sqrt( pow(v2.x - v1.x, 2) + pow(v2.y - v1.y, 2) ) ) > max) {
                 max = distance;
             }
@@ -1812,14 +1816,18 @@ void incrementalVoronoi(struct DCEL *dcel, struct watchtowerStruct *wt){
 
 struct halfEdge* executeBisectorIntersectsSplit(struct DCEL *dcel, struct watchtowerStruct *wt, int face){
 
+    // calculate bisector, get intersects, create split struct from intersects
     struct bisector *currBisector = getBisector(dcel->faces[face].wt->x, dcel->faces[face].wt->y, wt->x, wt->y);
     struct intersection *currIntersection = getIntersection(currBisector, dcel, face, DEFAULTMINLENGTH);
     struct split *currSplit = getSplitFromIntersect(currIntersection);
     struct halfEdge* joinEdge;
 
+    // make sure split order results in new watchtower being in new face
     if(getRelativeDir(wt->x, wt->y, &currSplit->startSplitPoint, &currSplit->endSplitPoint) == INSIDE) {
         reverseSplit(currSplit);
     }
+
+    // retrieve new face's join edge for use in incrementVoronoi multi-face linkage
     joinEdge = applySplit(currSplit, dcel);
 
     freeBisector(currBisector);
@@ -1834,6 +1842,7 @@ struct split *getSplitFromIntersect(struct intersection *intersection){
     struct split *split = (struct split*)malloc(sizeof(struct split));
     assert(split);
 
+    // create split from intersect data
     split->startSplitPoint = intersection->vertex_i;
     split->endSplitPoint = intersection->vertex_f;
     split->startEdge = intersection->edge_i;
@@ -1847,6 +1856,7 @@ struct split *getSplitFromIntersect(struct intersection *intersection){
 
 void reverseSplit(struct split* split){
 
+    // reverse start and end edges and points so split happens in reverse
     int tempIndex = split->startEdge;
     struct vertex tempVertex = split->startSplitPoint;
 
@@ -1856,6 +1866,10 @@ void reverseSplit(struct split* split){
     split->endSplitPoint = tempVertex;
 
 }
+
+/////////////////////
+// DEBUG FUNCTIONS //
+/////////////////////
 
 void printBisector(struct bisector *b){
 

@@ -143,6 +143,7 @@ void outputResultDiameter(char *outputfileName, struct watchtowerStruct **wts, i
         if(! wts[i]){
             continue;
         }
+        // get diameter and store in watchtower structs
         wts[i]->diameter = getDiameter(dcel, wts[i]->face);
         fprintf(outputfile,
             "Watchtower ID: %s, Postcode: %s, Population Served: %d, "
@@ -169,7 +170,8 @@ void outputResultDiameterSorted(char *outputfileName, struct watchtowerStruct **
     
     /* Must have DCEL. */
     assert(dcel);
-    
+
+    // get diameter and store in watchtower structs
     for(i = 0; i < wtCount; i++){
         if(! wts[i]){
             continue;
@@ -177,12 +179,14 @@ void outputResultDiameterSorted(char *outputfileName, struct watchtowerStruct **
         wts[i]->diameter = getDiameter(dcel, wts[i]->face);
     }
 
+    // insertion sort by diamater
     for (i=1; i<wtCount; i++) {
         for (j=i-1; j>=0 && wts[j+1]->diameter < wts[j]->diameter; j--) {
             wtsSwap(&wts[j+1], &wts[j]);
         }
     }
 
+    // print watchtower data to file in sorted order
     for(i = 0; i < wtCount; i++){
         if(! wts[i]){
             continue;
